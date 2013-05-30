@@ -5,7 +5,7 @@ class Parser
 	attr_accessor	:name, :rank, :experiences, :skills_all, :skills_upper, :skills_lower
 					:response
 
- 	def parse(pdf_file)
+ 	def self.parse(pdf_file)
 		unless pdf_file.blank?
 			pdf_reader = PDF::Reader.new(pdf_file.open)
 
