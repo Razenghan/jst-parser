@@ -7,3 +7,6 @@
 
 ## Install local source code as gem
 `rake install`
+
+## Require the gem
+require 'jst'
