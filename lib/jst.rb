@@ -36,7 +36,7 @@ class Parser
   	end
 
 	private
-	def parse_experience(content)
+	def self.parse_experience(content)
 		experience_start = /Military Experience/
 		experience_end = /College Level Test Scores|Other Learning Experiences/
 		#experience_regexp = /[A-Z]{2,4}\-.{2,4}\-.{2,4}\s+\d{2}\-\w{3}-\d{4}/
