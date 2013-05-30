@@ -150,7 +150,7 @@ class Parser
 		# skills.sort_by {|key, value| value}
 	end
 
-	def create_response
+	def self.create_response
 		@response = {}
 		@response[:positions] = @experiences
 		@response[:skills] = @skills_all
@@ -183,7 +183,7 @@ class Parser
 	# 	end
 	# end
 
-	def is_numeric?(obj)
+	def self.is_numeric?(obj)
       true if Float(obj) rescue false
     end
 end
