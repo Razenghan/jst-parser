@@ -7,27 +7,31 @@ class Parser
 
  	def self.parse(pdf_file)
 		unless pdf_file.blank?
-			pdf_reader = PDF::Reader.new(pdf_file.open)
+			begin
+				pdf_reader = PDF::Reader.new(pdf_file.open)
 
-			# pdf-reader splits on newline as a 'page'
-			# Iterate through each page & concat
-			pdf_text = ''
-			pdf_reader.pages.each do |page|
-				pdf_text += page.text
+				# pdf-reader splits on newline as a 'page'
+				# Iterate through each page & concat
+				pdf_text = ''
+				pdf_reader.pages.each do |page|
+					pdf_text += page.text
+				end
+
+			 	# Pull out various attributes
+				@name ||= pdf_text.match(/Name:(.+)$/)
+				@name = @name[@name.length - 1].gsub!(/^\s+/,'') unless @name.nil?
+
+				@rank ||= pdf_text.match(/Rank:(.+)$/)
+				@rank = @rank[@rank.length - 1].gsub!(/^\s+/,'') unless @rank.nil?
+
+				@status ||= pdf_text.match(/Status:(.+)$/)
+				@status = @status[@status.length - 1].gsub!(/^\s+/,'') unless @status.nil?
+
+				parse_experience(pdf_text)
+				create_response()
+			rescue PDF::Reader::MalformedPDFError
+				throw JST::BadPDFError, "Could not parse JST."
 			end
-
-		 	# Pull out various attributes
-			@name ||= pdf_text.match(/Name:(.+)$/)
-			@name = @name[@name.length - 1].gsub!(/^\s+/,'') unless @name.nil?
-
-			@rank ||= pdf_text.match(/Rank:(.+)$/)
-			@rank = @rank[@rank.length - 1].gsub!(/^\s+/,'') unless @rank.nil?
-
-			@status ||= pdf_text.match(/Status:(.+)$/)
-			@status = @status[@status.length - 1].gsub!(/^\s+/,'') unless @status.nil?
-
-			parse_experience(pdf_text)
-			create_response()
 		end
   	end
 
