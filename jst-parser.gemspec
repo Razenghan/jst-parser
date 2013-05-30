@@ -17,10 +17,10 @@ Gem::Specification.new do |s|
   s.authors     = ['Chris Little']
   s.email       = 'razenghan@gmail.com'
   s.homepage    = 'http://rubygems.org/gems/jst-parser'
-
-  s.files         = `git ls-files`.split($/)
+  s.license     = 'MIT'
+  s.files       = `git ls-files`.split($/)
   s.test_files  = s.files.grep(%r{^(test|spec|features)/})
-  s.require_path = 'lib'
+  s.require_path  = 'lib'
 
   # PDF Parser
   s.add_dependency 'pdf-reader', '~> 1.3.3'
