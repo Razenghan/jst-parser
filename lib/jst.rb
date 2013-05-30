@@ -2,7 +2,7 @@ require 'pdf-reader'
 
 module JST
 class Parser
-	attr_accessor	:jst_response, :name, :rank, :positions, :educations
+	attr_accessor	:jst_response, :name, :rank, :positions, :educations,
 					:skills_all, :skills_lower, :skills_upper, :skills_vocational, :skills_graduate
 
  	def self.parse(pdf_file)
