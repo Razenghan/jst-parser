@@ -2,7 +2,7 @@ Gem::Specification.new do |s|
   s.name        = 'jst-parser'
   s.version     = '0.0.1'
   s.date        = '2013-05-30'
-  
+
   s.summary     = 'Joint Service Transcript (JST) parsing utility.'
   s.description = 'A PDF parser for the Joint Service Transcript (JST), a standardized
                   service transcript for Army, Marine Corps, Navy, and Coast Guard personnel. 
@@ -15,5 +15,6 @@ Gem::Specification.new do |s|
   s.files       = Dir['{lib}/**/*.rb', 'LICENSE', '*.md']
   s.require_path = 'lib'
 
-  #s.add_dependency 'json', '~> 1.7.6'
+  # PDF Parser
+  s.add_dependency 'pdf-reader', '~> 1.3.3'
 end
