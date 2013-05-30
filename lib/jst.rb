@@ -3,7 +3,7 @@ require 'pdf-reader'
 module JST
 class Parser
 	attr_accessor	:name, :rank, :experiences, :skills_all, :skills_upper, :skills_lower
-					:response
+					:jst_response
 
  	def self.parse(pdf_file)
 		unless pdf_file.blank?
@@ -29,6 +29,8 @@ class Parser
 
 				parse_experience(pdf_text)
 				create_response()
+
+				return @jst_response
 			rescue PDF::Reader::MalformedPDFError
 				throw JST::BadPDFError, "Could not parse JST."
 			end
@@ -151,9 +153,9 @@ class Parser
 	end
 
 	def self.create_response
-		@response = {}
-		@response[:positions] = @experiences
-		@response[:skills] = @skills_all
+		@jst_response = {}
+		@jst_response[:positions] = @experiences
+		@jst_response[:skills] = @skills_all
 	end
 
 	# We'll clean up coursework later....
