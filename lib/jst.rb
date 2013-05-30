@@ -2,8 +2,8 @@ require 'pdf-reader'
 
 module JST
 class Parser
-	attr_accessor	:name, :rank, :experiences, :skills_all, :skills_upper, :skills_lower
-					:jst_response
+	attr_accessor	:jst_response, :name, :rank, :experiences,
+					:skills_all, :skills_lower, :skills_upper, :skills_vocational, :skills_graduate
 
  	def self.parse(pdf_file)
 		unless pdf_file.blank?
@@ -44,18 +44,20 @@ class Parser
 		#experience_regexp = /[A-Z]{2,4}\-.{2,4}\-.{2,4}\s+\d{2}\-\w{3}-\d{4}/
 		#experience_regexp = /([A-Z]{2,4}\-.{2,4}\-.{2,4})|(NONE ASSIGNED)\s+\d{2}\-\w{3}-\d{4}/
 		experience_regexp = /([A-Z]{2,4}\-.{2,4}\-.{2,4}\s+\d{2}\-\w{3}-\d{4})|(NONE ASSIGNED)\s+\d{2}\-\w{3}-\d{4}/
-		skills_upper_regexp = /(.+)\s+(\d)\s+\w{2}\s+U/
 		skills_lower_regexp = /(.+)\s+(\d)\s+\w{2}\s+L/
+		skills_upper_regexp = /(.+)\s+(\d)\s+\w{2}\s+U/
 		skills_vocational_regexp = /(.+)\s+(\d)\s+\w{2}\s+V/
 		skills_graduate_regexp = /(.+)\s+(\d)\s+\w{2}\s+G/
 		ignore_privacy_regexp = /PRIVACY ACT INFORMATION/
 		ignore_date_regexp = /\(\d{1,2}\/\d{1,2}\)\(\d{1,2}\/\d{1,2}\)/
 		ignore_misc_regexp = /None|NONE ASSIGNED/
 
-		@experiences = {}
+		@positions = {}
 		@skills_all = {}
-		@skills_upper = {}
 		@skills_lower = {}
+		@skills_upper = {}
+		@skills_vocational = {}
+		@skills_graduate = {}
 		position_title = ''
 		position_desc = ''
 		inside_experience_section = false
@@ -79,7 +81,7 @@ class Parser
 				# Finished last job position.  Appent previous job position.
 				if !position_title.blank? && !position_desc.blank?
 					puts '_-_--__-_-__--_ APPENDING -_--__--_-----_'
-					@experiences[position_title] = position_desc
+					@positions[position_title] = position_desc
 					position_title = ''
 					position_desc = ''
 				end
@@ -96,7 +98,7 @@ class Parser
 					# At the next job position.  Append previous job position.
 					if !position_title.blank? && !position_desc.blank?
 						puts '_-_--__-_-__--_ APPENDING -_--__--_-----_'
-						@experiences[position_title] = position_desc
+						@positions[position_title] = position_desc
 						position_title = ''
 						position_desc = ''
 					end
@@ -114,27 +116,35 @@ class Parser
 					next
 				end
 
-				if skills_match = line.match(skills_upper_regexp)
-					skill_is_upper = true
-				elsif skills_match = line.match(skills_lower_regexp)
+				if skills_match = line.match(skills_lower_regexp)
 					skill_is_lower = true
+				elsif skills_match = line.match(skills_upper_regexp)
+					skill_is_upper = true
+				elsif skills_match = line.match(skills_vocational_regexp)
+					skill_is_vocational = true
+				elsif skills_match = line.match(skills_graduate_regexp)
+					skill_is_graduate = true
 				end
 
-				if skill_is_upper || skill_is_lower
+				if skill_is_lower || skill_is_upper || skill_is_vocational || skill_is_graduate
 					unless skills_match[1].blank?
 						# Strip out skill name
 						skill_name = skills_match[1].strip!
 
 						# Init skill name key, if none exists
 						@skills_all[skill_name] = 0 if @skills_all[skill_name].nil?
-						@skills_upper[skill_name] = 0 if @skills_upper[skill_name].nil? && skill_is_upper
 						@skills_lower[skill_name] = 0 if @skills_lower[skill_name].nil? && skill_is_lower
+						@skills_upper[skill_name] = 0 if @skills_upper[skill_name].nil? && skill_is_upper
+						@skills_vocational[skill_name] = 0 if @skills_vocational[skill_name].nil? && skill_is_vocational
+						@skills_graduate[skill_name] = 0 if @skills_graduate[skill_name].nil? && skill_is_graduate
 						
 						# Strip out skill value (in credits).  Add to skills hash
 						if !skills_match[1].blank? && is_numeric?(skills_match[2])
 							@skills_all[skill_name] = @skills_all[skill_name] + skills_match[2].to_i
-							@skills_upper[skill_name] = @skills_upper[skill_name] + skills_match[2].to_i if skill_is_upper
 							@skills_lower[skill_name] = @skills_lower[skill_name] + skills_match[2].to_i if skill_is_lower
+							@skills_upper[skill_name] = @skills_upper[skill_name] + skills_match[2].to_i if skill_is_upper
+							@skills_vocational[skill_name] = @skills_vocational[skill_name] + skills_match[2].to_i if skill_is_vocational
+							@skills_graduate[skill_name] = @skills_graduate[skill_name] + skills_match[2].to_i if skill_is_graduate
 						end
 
 					end
@@ -154,8 +164,15 @@ class Parser
 
 	def self.create_response
 		@jst_response = {}
-		@jst_response[:positions] = @experiences
+		@jst_response[:name] = @name
+		@jst_response[:rank] = @rank
+		@jst_response[:education] = @educations
+		@jst_response[:experience] = @positions
 		@jst_response[:skills] = @skills_all
+		@jst_response[:skills_lower] = @skills_lower
+		@jst_response[:skills_upper] = @skills_upper
+		@jst_response[:skills_vocational] = @skills_vocational
+		@jst_response[:skills_graduate] = @skills_graduate
 	end
 
 	# We'll clean up coursework later....
