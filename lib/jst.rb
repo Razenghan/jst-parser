@@ -8,9 +8,8 @@ class Parser
  	def self.parse(pdf_file)
 		unless pdf_file.nil? || pdf_file.size <= 0
 			begin
-				pdf_reader = PDF::Reader.new(pdf_file.open)
+				pdf_reader = PDF::Reader.new(pdf_file)
 
-				# pdf-reader splits on newline as a 'page'
 				# Iterate through each page & concat
 				pdf_text = ''
 				pdf_reader.pages.each do |page|
