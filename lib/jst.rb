@@ -6,6 +6,13 @@ module JST
 		attr_writer		:jst_response, :name, :rank, :educations, :positions, :skills_all,
 						:skills_lower, :skills_upper, :skills_vocational, :skills_graduate
 
+		BRANCH_ARMY = 'United States Army'
+		BRANCH_NAVY = 'United States Navy'
+		BRANCH_AIR = 'United States Air Force'
+		BRANCH_MARINES = 'United States Marine Corps'
+		BRANCH_COAST = 'United States Coast Guard'
+		BRANCH_DOD = 'Department of Defense'
+
 	 	def parse(pdf_file)
 	 		unless @debug
 	 			@debug = false
@@ -43,11 +50,12 @@ module JST
 
 		private
 		def parse_experience(content)
-			experience_start = /Military Experience/
-			experience_end = /College Level Test Scores|Other Learning Experiences/
+			experience_section_start = /Military Experience/
+			experience_section_end = /College Level Test Scores|Other Learning Experiences/
 			#experience_regexp = /[A-Z]{2,4}\-.{2,4}\-.{2,4}\s+\d{2}\-\w{3}-\d{4}/
 			#experience_regexp = /([A-Z]{2,4}\-.{2,4}\-.{2,4})|(NONE ASSIGNED)\s+\d{2}\-\w{3}-\d{4}/
 			experience_regexp = /([A-Z]{2,4}\-.{2,4}\-.{2,4}\s+\d{2}\-\w{3}-\d{4})|(NONE ASSIGNED)\s+\d{2}\-\w{3}-\d{4}/
+			experience_date = /(\d{2}\-[A-Z]{3}\-\d{2,4})\D*(\d{2}\-[A-Z]{3}\-\d{4})?/
 			skills_lower_regexp = /(.+)\s+(\d)\s+\w{2}\s+L/
 			skills_upper_regexp = /(.+)\s+(\d)\s+\w{2}\s+U/
 			skills_vocational_regexp = /(.+)\s+(\d)\s+\w{2}\s+V/
@@ -57,12 +65,16 @@ module JST
 			ignore_misc_regexp = /None|NONE ASSIGNED/
 			ignore_orphaned_skills = /^(\d|L|U|V|G|SH)$/
 			ignore_list = nil
-			@positions = {}
+			@positions = []
 			@skills_all = {}
 			@skills_lower = {}
 			@skills_upper = {}
 			@skills_vocational = {}
 			@skills_graduate = {}
+			position = {}
+			position_branch = ''
+			position_date_begin = ''
+			position_date_end = ''
 			position_title = ''
 			position_desc = ''
 			inside_experience_section = false
@@ -73,19 +85,23 @@ module JST
 		 	content_array.each do |line|
 		 		line.strip!
 		 		next if line.empty?
-				if line.match(experience_start)
+				if line.match(experience_section_start)
 					# Reached the job experience section.  Begin parsing out.
 					inside_experience_section = true
 					puts "-- -- -- -- -- -- --  INSIDE EXPERIENCE, PARSING -- -- -- -- -- -- -- " if @debug
 					next
 				end
-				if line.match(experience_end)
+				if line.match(experience_section_end)
 					puts "-- -- -- -- -- -- --  FINISHED PARSING -- -- -- -- -- -- -- " if @debug
 
 					# Finished last job position.  Appent previous job position.
 					if !position_title.empty? && !position_desc.empty?
-						puts '_-_--__-_-__--_ APPENDING -_--__--_-----_' if @debug
-						@positions[position_title] = position_desc
+						puts '-- -- -- -- -- -- --  APPENDING POSITION -- -- -- -- -- -- -- ' if @debug
+
+						append_position(position_branch, position_date_begin, position_date_end, position_title, position_desc)
+						position_branch = ''
+						position_date_begin = ''
+						position_date_end = ''
 						position_title = ''
 						position_desc = ''
 					end
@@ -96,16 +112,34 @@ module JST
 					if line.match(experience_regexp)
 						puts "~~~~~ NEW EXPERIENCE: #{line}" if @debug
 
-						# Next line will be the job title
+						# Determine which branch this job title falls under
+						position_branch = BRANCH_ARMY if line.match(/AR-/)
+						position_branch = BRANCH_AIR if line.match(/AF-/)
+						position_branch = BRANCH_NAVY if line.match(/NV-|NEC-|NER-|LDO-|NWO-/)
+						position_branch = BRANCH_MARINES if line.match(/MC-|MCE-/)
+						position_branch = BRANCH_COAST if line.match(/CG-|CGR-|CGW-/)
+						position_branch = BRANCH_DOD if line.match(/DD-/)
+
+						# Determine the service date (dd-MMM-yyyy)
+						if date_match = line.match(experience_date)
+							puts " ^^^^^ PARSING DATE ^^^^^^ "
+							position_date_begin = date_match[1] unless date_match[1].nil?
+							position_date_end = date_match[2] unless date_match[2].nil?
+						end
+
+						# Next line will be the job titles
 						at_job_title = true
 
-						# At the next job position.  Append previous job position.
+						# Since we're at the next job position, append the previous job position.
 						if !position_title.empty? && !position_desc.empty?
-							puts '_-_--__-_-__--_ APPENDING -_--__--_-----_' if @debug
-							@positions[position_title] = position_desc
+							append_position(position_branch, position_date_begin, position_date_end, position_title, position_desc)
+							position_branch = ''
+							position_date_begin = ''
+							position_date_end = ''
 							position_title = ''
 							position_desc = ''
 						end
+
 						next
 					end
 
@@ -166,6 +200,20 @@ module JST
 				end
 			end
 			# skills.sort_by {|key, value| value}
+		end
+
+		def append_position(branch, date_begin, date_end, title, description)
+			position = {}
+			position[:branch] = branch
+			position[:date_begin] = date_begin
+			position[:date_end] = date_end
+			position[:title] = title
+			position[:description] = description
+			@positions.push(position)
+
+			# @positions[position_title] = position_desc
+			# position_title = ''
+			# position_desc = ''
 		end
 
 		def create_response
