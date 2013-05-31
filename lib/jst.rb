@@ -6,7 +6,7 @@ class Parser
 					:skills_all, :skills_lower, :skills_upper, :skills_vocational, :skills_graduate
 
  	def self.parse(pdf_file)
-		unless pdf_file.blank?
+		unless my_pdf.nil? || my_pdf.size <= 0
 			begin
 				pdf_reader = PDF::Reader.new(pdf_file.open)
 
