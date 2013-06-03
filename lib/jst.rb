@@ -45,7 +45,7 @@ module JST
 
 					return @jst_response
 				rescue PDF::Reader::MalformedPDFError
-					throw JST::Parser::BadPDFError, "Could not parse JST."
+					raise JST::Parser::BadPDFError, "Could not parse JST."
 				end
 			end
 	  	end
