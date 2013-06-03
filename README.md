@@ -16,16 +16,21 @@ Or install it yourself as:
 
 ## Usage
 
-	The JST::Parser object accepts a PDF of type IO::File, and will return a hash containing the following keys:
-	name
-	rank
-	education
-	experience
-	skills
-	skills_lower
-	skills_upper
-	skills_vocational
-	skills_graduate
+	The JST::Parser object accepts a PDF of type IO::File, and will return a hash containing the following
+	name,
+	rank,
+	education,
+	[experience:
+		branch,
+		date_begin,
+		date_end,
+		title,
+		description],
+	skills,
+	skills_lower,
+	skills_upper,
+	skills_vocational,
+	skills_graduate,
 
 ## Code Example
 
@@ -36,7 +41,7 @@ Or install it yourself as:
 
     parsed_document[:name]
 
-    
+
 ## Contributing
 
 1. Fork it

@@ -13,6 +13,8 @@ module JST
 		BRANCH_COAST = 'United States Coast Guard'
 		BRANCH_DOD = 'Department of Defense'
 
+		class BadPDFError < StandardError ; end
+
 	 	def parse(pdf_file)
 	 		unless @debug
 	 			@debug = false
@@ -43,7 +45,7 @@ module JST
 
 					return @jst_response
 				rescue PDF::Reader::MalformedPDFError
-					throw JST::BadPDFError, "Could not parse JST."
+					throw JST::Parser::BadPDFError, "Could not parse JST."
 				end
 			end
 	  	end
