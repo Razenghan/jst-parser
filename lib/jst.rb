@@ -45,7 +45,13 @@ module JST
 
 					return @jst_response
 				rescue PDF::Reader::MalformedPDFError
-					raise JST::Parser::BadPDFError, "Could not parse JST."
+					raise BadPDFError, "Could not parse JST."
+				rescue ArgumentError
+					raise BadPDFError, "PDF text parsing exception."
+				rescue PDF::Reader::UnknownGlyphWidthError
+					# Waiting for this exception to be commited from the following pull request:
+					# https://github.com/yob/pdf-reader/pull/105
+					raise BadPDFError, "PDF text parsing exception."
 				end
 			end
 	  	end
