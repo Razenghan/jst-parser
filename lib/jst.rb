@@ -96,15 +96,15 @@ module JST
 				if line.match(experience_section_start)
 					# Reached the job experience section.  Begin parsing out.
 					inside_experience_section = true
-					puts "-- -- -- -- -- -- --  INSIDE EXPERIENCE, PARSING -- -- -- -- -- -- -- " if @debug
+					puts "-- -- -- JOB EXPERIENCE SECTION START -- -- -- " if @debug
 					next
 				end
 				if line.match(experience_section_end)
-					puts "-- -- -- -- -- -- --  FINISHED PARSING -- -- -- -- -- -- -- " if @debug
+					puts "-- -- -- JOB EXPERIENCE SECTION END -- -- -- " if @debug
 
 					# Finished last job position.  Appent previous job position.
 					if !position_title.empty? && !position_desc.empty?
-						puts '-- -- -- -- -- -- --  APPENDING POSITION -- -- -- -- -- -- -- ' if @debug
+						puts '-- -- APPENDING PREVIOUS POSITION -- -- ' if @debug
 
 						append_position(position_branch, position_date_begin, position_date_end, position_title, position_desc)
 						position_branch = ''
@@ -118,7 +118,7 @@ module JST
 
 				if inside_experience_section
 					if line.match(experience_regexp)
-						puts "~~~~~ NEW EXPERIENCE: #{line}" if @debug
+						puts "-- -- NEW EXPERIENCE" if @debug
 
 						# Determine which branch this job title falls under
 						position_branch = BRANCH_ARMY if line.match(/AR-/)
@@ -130,9 +130,10 @@ module JST
 
 						# Determine the service date (dd-MMM-yyyy)
 						if date_match = line.match(experience_date)
-							puts " ^^^^^ PARSING DATE ^^^^^^ "
 							position_date_begin = date_match[1] unless date_match[1].nil?
+							puts "-- START DATE:  #{position_date_begin}" unless date_match[1].nil?
 							position_date_end = date_match[2] unless date_match[2].nil?
+							puts "-- END DATE: #{position_date_end}" unless date_match[2].nil?
 						end
 
 						# Next line will be the job titles
@@ -152,12 +153,12 @@ module JST
 					end
 
 					if at_job_title
-						puts "~~~~~ JOB TITLE: #{line}" if @debug
+						puts "-- JOB TITLE: #{line}" if @debug
 						at_job_title = false
 						position_title = line
 
 						# Next line will be the job description starting point
-						puts "~~~~~ AT JOB DESC" if @debug
+						puts "-- JOB DESCRIPTION"
 						at_job_desc = true
 						next
 					end
@@ -177,7 +178,7 @@ module JST
 							# Strip out skill name
 							skill_name = skills_match[1].strip!
 
-							puts "**** SKILL: #{skill_name}" if @debug
+							puts "-- SKILL: #{skill_name}" if @debug
 
 							# Init skill name key, if none exists
 							@skills_all[skill_name] = 0 if @skills_all[skill_name].nil?
@@ -201,7 +202,7 @@ module JST
 
 					if at_job_desc
 						unless line.match(ignore_privacy_regexp) || line.match(ignore_date_regexp) || line.match(ignore_misc_regexp) || line.match(ignore_orphaned_skills)
-							puts "m: #{line}" if @debug
+							puts "-> #{line}" if @debug
 							position_desc += line
 						end
 					end
