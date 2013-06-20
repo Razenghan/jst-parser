@@ -231,7 +231,7 @@ module JST
 			position[:date_begin] = date_begin
 			position[:date_end] = date_end
 			position[:title] = title
-			position[:description] = description.gsub!(/  /," ")
+			position[:description] = description.gsub(/  /," ")
 			@positions.push(position)
 		end
 
