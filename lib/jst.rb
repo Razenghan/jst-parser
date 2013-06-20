@@ -14,6 +14,7 @@ module JST
 		BRANCH_DOD = 'Department of Defense'
 
 		class BadPDFError < StandardError ; end
+		class UnknownPDFParsingError < StandardError ; end
 
 	 	def parse(pdf_file)
 	 		unless @debug
@@ -48,10 +49,12 @@ module JST
 					raise BadPDFError, "Could not parse JST."
 				rescue ArgumentError
 					raise BadPDFError, "PDF text parsing exception."
-				rescue PDF::Reader::UnknownGlyphWidthError
-					# Waiting for this exception to be commited from the following pull request:
-					# https://github.com/yob/pdf-reader/pull/105
-					raise BadPDFError, "PDF text parsing exception."
+				rescue => exc
+					raise UnknownPDFParsingError, "#{exc}"
+				# rescue PDF::Reader::UnknownGlyphWidthError
+				# 	# Waiting for this exception to be commited from the following pull request:
+				# 	# https://github.com/yob/pdf-reader/pull/105
+				# 	raise UnknownPDFParsingError, "PDF text parsing exception."
 				end
 			end
 	  	end
@@ -68,10 +71,12 @@ module JST
 			skills_upper_regexp = /(.+)\s+(\d)\s+\w{2}\s+U/
 			skills_vocational_regexp = /(.+)\s+(\d)\s+\w{2}\s+V/
 			skills_graduate_regexp = /(.+)\s+(\d)\s+\w{2}\s+G/
-			ignore_privacy_regexp = /PRIVACY ACT INFORMATION/
-			ignore_date_regexp = /\(\d{1,2}\/\d{1,2}\)\(\d{1,2}\/\d{1,2}\)/
-			ignore_misc_regexp = /None|NONE ASSIGNED/
-			ignore_orphaned_skills = /^(\d|L|U|V|G|SH)$/
+			ignore_regexp = []
+			ignore_regexp.push (/PRIVACY ACT INFORMATION/)
+			ignore_regexp.push (/\(\d{1,2}\/\d{1,2}\)\(\d{1,2}\/\d{1,2}\)/)
+			ignore_regexp.push (/None|NONE ASSIGNED/)
+			ignore_regexp.push (/^(\d|L|U|V|G|SH)$/)
+			ignore_regexp.push (/\*\*/)
 			ignore_list = nil
 			@positions = []
 			@skills_all = {}
@@ -117,6 +122,7 @@ module JST
 				end
 
 				if inside_experience_section
+					line.strip!
 					if line.match(experience_regexp)
 						puts "-- -- NEW EXPERIENCE" if @debug
 
@@ -158,7 +164,7 @@ module JST
 						position_title = line
 
 						# Next line will be the job description starting point
-						puts "-- JOB DESCRIPTION"
+						puts "-- JOB DESCRIPTION:"
 						at_job_desc = true
 						next
 					end
@@ -201,9 +207,17 @@ module JST
 					end
 
 					if at_job_desc
-						unless line.match(ignore_privacy_regexp) || line.match(ignore_date_regexp) || line.match(ignore_misc_regexp) || line.match(ignore_orphaned_skills)
+						ignore_line = false
+						ignore_regexp.each do |regex|
+							if line.match(regex)
+								ignore_line = true
+								break
+							end
+						end
+
+						unless ignore_line
 							puts "-> #{line}" if @debug
-							position_desc += line
+							position_desc += " #{line}"
 						end
 					end
 				end
@@ -217,12 +231,8 @@ module JST
 			position[:date_begin] = date_begin
 			position[:date_end] = date_end
 			position[:title] = title
-			position[:description] = description
+			position[:description] = description.gsub!(/  /," ")
 			@positions.push(position)
-
-			# @positions[position_title] = position_desc
-			# position_title = ''
-			# position_desc = ''
 		end
 
 		def create_response
